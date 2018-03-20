@@ -1,0 +1,107 @@
+---
+title: "PA1_templete"
+author: "Ellie Kim"
+date: '2018-03-19'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#Data Load
+```{r}
+data <- read.csv("./Data/activity.csv")
+```
+
+#Sum steps by day
+```{r}
+stepsSum <- aggregate(steps ~ date, data, sum)
+
+#Histogram steps per day
+hist(stepsSum$steps, 
+     main = paste("Total Steps Per Day"), 
+     xlab="Number of Steps",
+     col="orange", 
+     breaks = 20)
+
+#Mean and Median
+stepsMean <- mean(stepsSum$steps)
+stepsMean
+stepsMedian <- median(stepsSum$steps)
+stepsMedian
+
+#Average steps for each interval for all days
+stepsIntervalMean <- aggregate(steps ~ interval, data, mean)
+
+plot(stepsIntervalMean$interval,
+     stepsIntervalMean$steps, 
+     type="l", 
+     xlab="5-minute Interval", 
+     ylab="Number of Steps",
+     main="Average Number of Steps per day by Interval")
+
+#Find interval with most average steps
+maxInterval <- stepsIntervalMean[which.max(stepsIntervalMean$steps),1]
+maxInterval
+```
+
+
+#the total number of missing values in the dataset
+```{r}
+dataNA <- sum(is.na(data$steps))
+dataNA
+
+#Missing values were imputed by inserting the average for each interval
+dataNoNa <- transform(data, 
+                      steps = ifelse(is.na(data$steps), 
+                                     stepsIntervalMean$steps[match(data$interval,stepsIntervalMean$interval)], 
+                                     data$steps))
+
+stepsNoNaSum <- aggregate(steps ~ date, dataNoNa, sum)
+stepsNoNaSum
+
+hist(stepsNoNaSum$steps, 
+     main = paste("Total Steps Each Day - No NA"), 
+     xlab="Number of Steps", 
+     col="orange", 
+     breaks = 20)
+
+
+#No NA Data - mean and median
+
+NoNaMean <- mean(stepsNoNaSum$steps)
+NoNaMean
+NoNaMedian <- median(stepsNoNaSum$steps)
+NoNaMedian
+
+#Calculate difference between imputed and non-imputed data.
+
+diffMean <- stepsMean - NoNaMean
+diffMean
+diffMedian <- stepsMedian - NoNaMedian
+diffMedian
+
+#Calculate total difference
+diffTotal <- sum(stepsSum$steps) - sum(stepsNoNaSum$steps)
+diffTotal
+```
+
+#new field for weekday and weekend
+```{r}
+weekend <- c("Saturday", "Sunday")
+dataNoNa$dow <- as.factor(ifelse(is.element(weekdays(as.Date(dataNoNa$date)),
+                                                weekend), "Weekend", "Weekday"))
+
+stepsbyIntervalDow <- aggregate(steps ~ interval + dow, dataNoNa, mean)
+
+#Make a panel plot containing a time series plot
+library(lattice)
+xyplot(stepsbyIntervalDow$steps ~ stepsbyIntervalDow$interval|stepsbyIntervalDow$dow, 
+       main="Average Steps taken per Day by Interval",
+       xlab=" 5-minute interval", 
+       ylab="Total number of Steps",
+       layout=c(2,1), 
+       type="l")
+```
