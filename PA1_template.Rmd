@@ -2,7 +2,7 @@
 title: "PA1_templete"
 author: "Ellie Kim"
 date: '2018-03-19'
-output: html_document
+output: "md_document"
 ---
 
 ```{r setup, include=FALSE}
@@ -16,6 +16,7 @@ data <- read.csv("./Data/activity.csv")
 ```
 
 #Sum steps by day
+
 ```{r}
 stepsSum <- aggregate(steps ~ date, data, sum)
 
